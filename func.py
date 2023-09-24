@@ -32,7 +32,6 @@ def download_files(urls, dest_path):
         command = ""
 
         if 'civitai' in parsed_url.netloc:
-            # "https://civitai.com/api/download/models/128713?type=Model&format=SafeTensor&size=pruned&fp=fp16" remove all behind ?type
             url = url.split('?type')[0]
             command = f"aria2c --console-log-level=error -c -x 16 -s 16 -k 1M {url} -d \"{dest_path}\""
         elif 'huggingface' in parsed_url.netloc:
