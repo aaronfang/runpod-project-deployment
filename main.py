@@ -15,14 +15,27 @@ class DeployApp:
         script = os.path.join('projects', script)
         subprocess.run(['chmod', '+x', script])
         subprocess.run(['bash', script])
-        return "Deploy Complete"
+        return {"message": "Deploy Complete"}
 
     def download(self, url, path):
         download_files([url], path)
         return "Download Complete"
 
-    def kill_processes_on_port(self, port):
-        subprocess.run(['fuser', '-k', f'{port}/tcp'])
+    def kill_process_on_port(self, port):
+        result = subprocess.run(['lsof', '-i', f':{port}'], capture_output=True, text=True)
+        lines = result.stdout.splitlines()
+        if len(lines) > 1:
+            pid = lines[1].split()[1]
+            subprocess.run(['kill', '-9', pid])
+            return "Port Released"
+        else:
+            return "Port Not In Use"
+    
+    def send_files(self, paths):
+        paths_list = paths.split(',')
+        paths_list = [path.strip(' "\'') for path in paths_list]
+        subprocess.run(['croc', 'send', '--code', 'runpod'] + paths_list)
+        return "Files Sent"
 
     def create_ui(self):
         with gr.Blocks(analytics_enabled=False) as ui_component:
@@ -41,12 +54,20 @@ class DeployApp:
                     ], label="Preset Paths")
                 btn_download = gr.Button("Download", variant="primary", )
 
+            with gr.Accordion("Kill Process on Port", open=False):
+                port_input = gr.components.Textbox(lines=1, placeholder="Enter Port Number", label="Port")
+                btn_kill = gr.Button("Kill Process", variant="primary", )
+
+            with gr.Accordion("Send Files", open=False):
+                paths_input = gr.components.Textbox(lines=1, placeholder="Enter Paths Separated by Comma", label="Paths")
+                btn_send = gr.Button("Send Files", variant="primary", )
+
             output_text = gr.components.Textbox(lines=1, label="Output")
 
             btn_deploy.click(
                 fn=self.deploy,
                 inputs=[deploy_dropdown],
-                # outputs=[output_text]
+                outputs=[output_text]
             )
         
             btn_download.click(
@@ -59,6 +80,18 @@ class DeployApp:
                 fn=lambda dropdown_selected: dropdown_selected,
                 inputs=[download_dropdown],
                 outputs=[download_path]
+            )
+
+            btn_kill.click(
+                fn=self.kill_process_on_port,
+                inputs=[port_input],
+                outputs=[output_text]
+            )
+
+            btn_send.click(
+                fn=self.send_files,
+                inputs=[paths_input],
+                outputs=[output_text]
             )
 
         return ui_component

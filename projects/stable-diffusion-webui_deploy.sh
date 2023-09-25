@@ -22,19 +22,21 @@ else
     git pull
 fi
 
-# check if server port SERVER_PORT is occupied, if occupied, kill the process
-if lsof -Pi :${SERVER_PORT} -sTCP:LISTEN -t >/dev/null ; then
-    echo "Port ${SERVER_PORT} is occupied. Killing the process..."
-    kill -9 "$(lsof -t -i:${SERVER_PORT})"
-fi
-
 # Check if port is occupied, if occupied, increment the port number
 while lsof -Pi :${SERVER_PORT} -sTCP:LISTEN -t >/dev/null ; do
     echo "Port ${SERVER_PORT} is occupied. Trying next port..."
     SERVER_PORT=$((SERVER_PORT+1))
 done
 
+
+cd "${WEBUI_DIR}" || exit
+
+# Common out default args in webui-user.sh
+if [[ -f ./webui-user.sh ]]
+then
+    sed -i 's/^export COMMANDLINE_ARGS/#&/' ./webui-user.sh
+fi
+
 # 启动GUI
 echo "启动GUI..."
-cd "${WEBUI_DIR}" || exit
-venv/bin/python webui.sh --listen=0.0.0.0 --server_port=${SERVER_PORT} --theme=dark --share --api --xformers --enable-insecure-extension-access --no-half-vae
+./webui.sh -f --listen --port ${SERVER_PORT} --theme=dark --share --api --xformers --enable-insecure-extension-access --no-half-vae
