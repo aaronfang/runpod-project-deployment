@@ -11,6 +11,7 @@ if [ ! -d "runpod-project-deployment" ]; then
     apt-get install dos2unix
     apt-get install -y git
     apt-get install -y aria2
+    wget -qO- https://getcroc.schollz.com | bash
 
     pip install requests tqdm gdown
 fi

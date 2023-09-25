@@ -11,7 +11,7 @@ class DeployApp:
     def load_scripts(self):
         return [f for f in os.listdir('projects') if os.path.isfile(os.path.join('projects', f)) and f.endswith('.sh') and 'deploy' in f]
 
-    def deploy(script):
+    def deploy(self, script):
         script = os.path.join('projects', script)
         subprocess.run(['chmod', '+x', script])
         subprocess.run(['bash', script])
