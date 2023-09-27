@@ -22,6 +22,10 @@ if [ ! -d "${COMFYUI_DIR}" ]; then
     sed -i 's/path\/to\/stable-diffusion-webui\//\/workspace\/stable-diffusion-webui\//g' extra_model_paths.yaml
     sed -i 's/models\/ControlNet/\/workspace\/stable-diffusion-webui\/extensions\/sd-webui-controlnet\/models\//g' extra_model_paths.yaml
 
+    # clone custom nodes
+    cd custom_nodes || exit
+    git clone https://github.com/ltdrdata/ComfyUI-Manager.git
+
 fi
 
 # Check if port is occupied, if occupied, increment the port number
