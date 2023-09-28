@@ -71,7 +71,7 @@ class DeployApp:
                     '/workspace/stable-diffusion-webui/models/Lora',
                     '/workspace/stable-diffusion-webui/models/VAE',
                     '/workspace/stable-diffusion-webui/embeddings',
-                    '/workspace/stable-diffusion-webui/extensions/sd-webui-controlnet',
+                    '/workspace/stable-diffusion-webui/extensions/sd-webui-controlnet/models',
                     ], label="Preset Paths")
                 btn_download = gr.Button("Download", variant="primary", )
 
