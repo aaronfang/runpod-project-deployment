@@ -45,12 +45,43 @@ class DeployApp:
 
             with gr.Accordion("Download Files", open=False):
                 download_url = gr.components.Textbox(lines=1, placeholder="https://civitai.com/api/download/models/128713?type=Model&format=SafeTensor&size=pruned&fp=fp16", label="下载URL")
+                url_dropdown = gr.components.Dropdown(choices=[
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_canny.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_canny_anime.safetensors",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11f1p_sd15_depth.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_depth.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_depth_anime.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/ip-adapter_sd15_plus.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/ip-adapter_xl.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_blur.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_blur_anime.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/ioclab_sd15_recolor.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/sai_xl_recolor_256lora.safetensors",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_openpose_anime_v2.safetensors",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_scribble.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_scribble_anime.safetensors",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/sai_xl_sketch_256lora.safetensors",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_softedge.pth",
+                    "https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/sargezt_xl_softedge.safetensors",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/blob/main/control_v11e_sd15_ip2p.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11e_sd15_shuffle.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11f1e_sd15_tile.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_inpaint.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_lineart.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15s2_lineart_anime.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_mlsd.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_normalbae.pth",
+                    "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg.pth",
+                    ], label="Preset URLs")
                 download_path = gr.components.Textbox(lines=1, placeholder="Select Destination Path", label="Download to ...")
                 download_dropdown = gr.components.Dropdown(choices=[
                     '/workspace/stable-diffusion-webui/models/Stable-diffusion',
                     '/workspace/stable-diffusion-webui/models/Lora',
                     '/workspace/stable-diffusion-webui/models/VAE',
                     '/workspace/stable-diffusion-webui/embeddings',
+                    '/workspace/stable-diffusion-webui/extensions/sd-webui-controlnet',
                     ], label="Preset Paths")
                 btn_download = gr.Button("Download", variant="primary", )
 
@@ -74,6 +105,12 @@ class DeployApp:
                 fn=self.download,
                 inputs=[download_url, download_path],
                 outputs=[output_text]
+            )
+
+            url_dropdown.change(
+                fn=lambda dropdown_selected: dropdown_selected,
+                inputs=[url_dropdown],
+                outputs=[download_url]
             )
 
             download_dropdown.change(
