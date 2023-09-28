@@ -1,6 +1,7 @@
 #!/bin/bash
 
-ROOT_DIR="/workspace"    # 项目根目录
+ROOT_DIR="/workspace"
+PROJ_SCRIPTS_DIR="${ROOT_DIR}/runpod-project-deployment/projects"
 WEBUI_DIR="${ROOT_DIR}/stable-diffusion-webui"
 EXTENSIONS_DIR="${WEBUI_DIR}/extensions"
 CN_MODEL_DIR="${EXTENSIONS_DIR}/sd-webui-controlnet/models"
@@ -50,19 +51,30 @@ else
     wget https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_mlsd.yaml
     wget https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_normalbae.yaml
     wget https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg.yaml
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_canny.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_canny_anime.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_depth.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_depth_anime.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_blur.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_blur_anime.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_openpose_anime_v2.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/kohya_controllllite_xl_scribble_anime.safetensors
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/ip-adapter_sd15_plus.pth
+    wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/ip-adapter_xl.pth
 
-    echo "modify config.json..."
-    if [ -f "${WEBUI_DIR}/config.json" ]; then
-        echo "Modifying config.json..."
-        sed -i 's/"randn_source": .*/"randn_source": "CPU",/' "${WEBUI_DIR}/config.json"
-        sed -i 's/"sgm_noise_multiplier": .*/"sgm_noise_multiplier": true,/' "${WEBUI_DIR}/config.json"
-        sed -i 's/"no_dpmpp_sde_batch_determinism": .*/"no_dpmpp_sde_batch_determinism": false,/' "${WEBUI_DIR}/config.json"
-        sed -i 's/"quicksettings_list": .*/"quicksettings_list": ["sd_model_checkpoint","sd_vae","CLIP_stop_at_last_layers"],/' "${WEBUI_DIR}/config.json"
-        sed -i 's/"hide_samplers": .*/"hide_samplers": ["LMS","Heun","DPM2","DPM2 a","DPM++ 2S a","DPM++ 2M","DPM++ SDE","DPM++ 2M SDE","DPM++ 2M SDE Heun","DPM++ 2M SDE Heun Karras","DDIM","PLMS","DPM++ 2S a Karras","DPM2 a Karras","DPM2 Karras","LMS Karras","DPM adaptive","DPM fast","DPM++ 3M SDE","DPM++ 2M SDE Heun Exponential"],/' "${WEBUI_DIR}/config.json"
-    fi
+    # echo "replacing config.json..."
+    # cp "${PROJ_SCRIPTS_DIR}/config.json" "${WEBUI_DIR}/config.json"
+    # if [ -f "${WEBUI_DIR}/config.json" ]; then
+    #     echo "Modifying config.json..."
+    #     sed -i 's/"randn_source": .*/"randn_source": "CPU",/' "${WEBUI_DIR}/config.json"
+    #     sed -i 's/"sgm_noise_multiplier": .*/"sgm_noise_multiplier": true,/' "${WEBUI_DIR}/config.json"
+    #     sed -i 's/"no_dpmpp_sde_batch_determinism": .*/"no_dpmpp_sde_batch_determinism": false,/' "${WEBUI_DIR}/config.json"
+    #     sed -i 's/"quicksettings_list": .*/"quicksettings_list": ["sd_model_checkpoint","sd_vae","CLIP_stop_at_last_layers"],/' "${WEBUI_DIR}/config.json"
+    #     sed -i 's/"hide_samplers": .*/"hide_samplers": ["LMS","Heun","DPM2","DPM2 a","DPM++ 2S a","DPM++ 2M","DPM++ SDE","DPM++ 2M SDE","DPM++ 2M SDE Heun","DPM++ 2M SDE Heun Karras","DDIM","PLMS","DPM++ 2S a Karras","DPM2 a Karras","DPM2 Karras","LMS Karras","DPM adaptive","DPM fast","DPM++ 3M SDE","DPM++ 2M SDE Heun Exponential"],/' "${WEBUI_DIR}/config.json"
+    # fi
 
     echo "replacing styles.csv..."
-    cp "./styles.csv" "${WEBUI_DIR}/styles.csv"
+    cp "${PROJ_SCRIPTS_DIR}/styles.csv" "${WEBUI_DIR}/styles.csv"
 
     # Common out default args in webui-user.sh
     if [[ -f "${WEBUI_DIR}/webui-user.sh" ]]
