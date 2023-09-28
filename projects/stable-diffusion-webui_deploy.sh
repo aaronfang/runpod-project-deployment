@@ -65,6 +65,12 @@ else
     echo "download vae models..."
     cd "${VAE_DIR}" || exit
     wget https://huggingface.co/stabilityai/sd-vae-ft-mse-original/blob/main/vae-ft-mse-840000-ema-pruned.safetensors
+    wget https://huggingface.co/stabilityai/sdxl-vae/resolve/main/sdxl_vae.safetensors
+
+    echo "download embeddings models..."
+    cd "${EMBEDDINGS_DIR}" || exit
+    gdown "1-EXxOitLlXq-uRmGcuTFraRPV1pv3qUQ"
+    unzip "embeddings.zip"
 
     echo "replacing config.json..."
     cp "${PROJ_SCRIPTS_DIR}/config.json" "${WEBUI_DIR}/config.json"
