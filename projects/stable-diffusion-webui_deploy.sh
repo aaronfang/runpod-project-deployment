@@ -35,6 +35,8 @@ else
     git clone https://github.com/yankooliveira/sd-webui-photopea-embed.git
     git clone https://github.com/butaixianran/Stable-Diffusion-Webui-Civitai-Helper.git
     git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui-wildcards.git
+    git clone https://github.com/novitalabs/sd-webui-cleaner.git
+    git clone https://github.com/ljleb/sd-webui-freeu.git
 
     cd "${CN_MODEL_DIR}" || exit
     wget https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny.yaml
