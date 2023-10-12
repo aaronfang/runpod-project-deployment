@@ -5,13 +5,13 @@ WORKSPACE="/workspace"
 PANOHEAD_DIR="$WORKSPACE/PanoHead"
 DDFA_DIR="$WORKSPACE/3DDFA_V2"
 
-# 找到当前目录下的第一张图片
-img_file=$(find "$WORKSPACE" -maxdepth 1 \( -name "*.png" -o -name "*.jpeg" -o -name "*.webp" -o -name "*.jpg" \) -print -quit)
+# # 找到当前目录下的第一张图片
+# img_file=$(find "$WORKSPACE" -maxdepth 1 \( -name "*.png" -o -name "*.jpeg" -o -name "*.webp" -o -name "*.jpg" \) -print -quit)
 
-if [ -z "$img_file" ]; then
-    echo "在 $WORKSPACE 目录中没有找到任何图片"
-    exit 1
-fi
+# if [ -z "$img_file" ]; then
+#     echo "在 $WORKSPACE 目录中没有找到任何图片"
+#     exit 1
+# fi
 
 # install dlib dependencies
 apt-get update
