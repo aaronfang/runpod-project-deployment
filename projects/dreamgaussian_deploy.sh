@@ -6,11 +6,13 @@ SERVER_PORT=7860    # 服务器端口
 
 # Clone the repository if RERENDER_A_VIDEO_DIR does not exist
 if [ ! -d "${DREAMGAUSSIAN_DIR}" ]; then
+    cd "${ROOT_DIR}" || exit
     echo "Cloning main repository..."
     git lfs install
     git clone https://huggingface.co/spaces/jiawei011/dreamgaussian "${DREAMGAUSSIAN_DIR}"
 
     # create a virtual environment
+    cd "${DREAMGAUSSIAN_DIR}" || exit
     echo "Creating a virtual environment..."
     # if not venv exists, create one
     if [ ! -d "venv" ]; then
@@ -47,6 +49,7 @@ echo "Selected Port: ${SERVER_PORT}"
 
 # check if gradio_diffbir.py exists in DiffBIR_DIR, if exists, modify the file, replace block.launch() with block.launch(server_name="0.0.0.0")
 if [ -f "${DREAMGAUSSIAN_DIR}/app.py" ]; then
+    cd "${DREAMGAUSSIAN_DIR}" || exit
     echo "app.py exists. Modifying the file..."
     sed -i -E "s/demo\.launch\((server_name=\"0.0.0.0\", )?(server_port=[0-9]+)?\)/demo.launch(server_name=\"0.0.0.0\", server_port=${SERVER_PORT})/g" "${DREAMGAUSSIAN_DIR}/app.py"
 fi
