@@ -13,7 +13,7 @@ if [ ! -d "runpod-project-deployment" ]; then
     apt-get install -y aria2
     wget -qO- https://getcroc.schollz.com | bash
 
-    pip install requests tqdm gdown
+    pip install requests tqdm gdown gradio
 fi
 
 cd runpod-project-deployment || exit
