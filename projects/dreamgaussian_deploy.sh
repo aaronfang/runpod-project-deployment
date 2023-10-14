@@ -16,26 +16,34 @@ if [ ! -d "${DREAMGAUSSIAN_DIR}" ]; then
     echo "Creating a virtual environment..."
     # if not venv exists, create one
     if [ ! -d "venv" ]; then
-        python3 -m venv venv
+        python -m venv venv
     else
         echo "venv already exists."
     fi
 
     # Install dependencies
-    venv/bin/pip install -r requirements.txt
+    # venv/bin/pip install -r requirements.txt
 
-    # a modified gaussian splatting (+ depth, alpha rendering)
-    git clone --recursive https://github.com/ashawkey/diff-gaussian-rasterization
-    venv/bin/pip install ./diff-gaussian-rasterization
+    venv/bin/pip install torch-ema einops tensorboardX plyfile dearpygui huggingface_hub diffusers accelerate transformers xatlas torchvision
+    venv/bin/pip install trimesh PyMCubes pymeshlab rembg[gpu,cli] omegaconf ninja gradio
+    venv/bin/pip install https://github.com/camenduru/diff-gaussian-rasterization/releases/download/v1.0/diff_gaussian_rasterization-0.0.0-cp310-cp310-linux_x86_64.1.whl
+    venv/bin/pip install https://github.com/camenduru/diff-gaussian-rasterization/releases/download/v1.0/simple_knn-0.0.0-cp310-cp310-linux_x86_64.1.whl
+    venv/bin/pip install https://github.com/camenduru/diff-gaussian-rasterization/releases/download/v1.0/nvdiffrast-0.3.1-py3-none-any.whl
+    venv/bin/pip install https://github.com/camenduru/diff-gaussian-rasterization/releases/download/v1.0/kiui-0.1.8-py3-none-any.whl
+    apt install -qq -y xvfb
 
-    # simple-knn
-    venv/bin/pip install ./simple-knn
+    # # a modified gaussian splatting (+ depth, alpha rendering)
+    # git clone --recursive https://github.com/ashawkey/diff-gaussian-rasterization
+    # venv/bin/pip install ./diff-gaussian-rasterization
 
-    # nvdiffrast
-    venv/bin/pip install git+https://github.com/NVlabs/nvdiffrast/
+    # # simple-knn
+    # venv/bin/pip install ./simple-knn
 
-    # kiuikit
-    venv/bin/pip install git+https://github.com/ashawkey/kiuikit
+    # # nvdiffrast
+    # venv/bin/pip install git+https://github.com/NVlabs/nvdiffrast/
+
+    # # kiuikit
+    # venv/bin/pip install git+https://github.com/ashawkey/kiuikit
 
 fi
 
@@ -48,13 +56,13 @@ done
 echo "Selected Port: ${SERVER_PORT}"
 
 # check if gradio_diffbir.py exists in DiffBIR_DIR, if exists, modify the file, replace block.launch() with block.launch(server_name="0.0.0.0")
-if [ -f "${DREAMGAUSSIAN_DIR}/app.py" ]; then
+if [ -f "${DREAMGAUSSIAN_DIR}/gradio_app.py" ]; then
     cd "${DREAMGAUSSIAN_DIR}" || exit
-    echo "app.py exists. Modifying the file..."
-    sed -i -E "s/demo\.launch\((server_name=\"0.0.0.0\", )?(server_port=[0-9]+)?\)/demo.launch(server_name=\"0.0.0.0\", server_port=${SERVER_PORT})/g" "${DREAMGAUSSIAN_DIR}/app.py"
+    echo "gradio_app.py exists. Modifying the file..."
+    sed -i -E "s/demo\.queue\(\)\.launch\((server_name=\"0.0.0.0\", )?(server_port=[0-9]+)?\)/demo.queue().launch(server_name=\"0.0.0.0\", server_port=${SERVER_PORT})/g" "${DREAMGAUSSIAN_DIR}/gradio_app.py"
 fi
 
 # Run the server
 echo "Running the server..."
 cd "${DREAMGAUSSIAN_DIR}" || exit
-venv/bin/python app.py
+venv/bin/python gradio_app.py

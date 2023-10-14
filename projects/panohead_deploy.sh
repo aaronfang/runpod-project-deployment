@@ -5,33 +5,6 @@ WORKSPACE="/workspace"
 PANOHEAD_DIR="$WORKSPACE/PanoHead"
 DDFA_DIR="$WORKSPACE/3DDFA_V2"
 
-# # 找到当前目录下的第一张图片
-# img_file=$(find "$WORKSPACE" -maxdepth 1 \( -name "*.png" -o -name "*.jpeg" -o -name "*.webp" -o -name "*.jpg" \) -print -quit)
-
-# if [ -z "$img_file" ]; then
-#     echo "在 $WORKSPACE 目录中没有找到任何图片"
-#     exit 1
-# fi
-
-# install dlib dependencies
-apt-get update
-apt-get install -y --no-install-recommends build-essential cmake 
-#libopenblas-dev liblapack-dev libjpeg-dev libpng-dev libtiff-dev libgif-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libgtk-3-dev libatlas-base-dev gfortran libhdf5-dev libhdf5-serial-dev libhdf5-103 libqtgui4 libqtwebkit4 libqt4-test python3-dev python3-pip python3-venv python3-setuptools python3-wheel python3-numpy python3-scipy python3-matplotlib python3-pandas python3-opencv python3-h5py python3-protobuf python3-keras python3-sip-dev python3-sip python3-pyqt5 python3-pyqt5.qtopengl python3-pyqt5.qtwebkit python3-pyqt5.qtsvg python3-pyqt5.qtserialport python3-pyqt5.qtsensors python3-pyqt5.qtlocation python3-pyqt5.qtmultimedia python3-pyqt5.qtxmlpatterns python3-pyqt5.qtxml python3-pyqt5.qtsql python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-pyqt5.qtmultimedia python3-pyqt5.qtxmlpatterns python3-pyqt5.qtsql python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-pyqt5.qtmultimedia python3-pyqt5.qtxmlpatterns python3-pyqt5.qtsql python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-pyqt5.qtmultimedia python3-pyqt5.qtxmlpatterns python3-pyqt5.qtsql python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-pyqt5.qtmultimedia python3-pyqt5.qtxmlpatterns python3-pyqt5.qtsql python3-pyqt5.qtsvg python3-pyqt5.qtopengl python3-pyqt5.qtmultimedia python3-pyqt5.qtxmlpatterns python3-pyqt5.qtsql
-
-# Install dependencies
-pip install imgui glfw pyspng mrcfile ninja plyfile trimesh onnxruntime onnx cython opencv-python click dlib tqdm imageio matplotlib scipy imageio-ffmpeg scikit-image
-echo "========== 依赖安装完成 =========="
-
-# clone repos and install dependencies
-if [ -d "$PANOHEAD_DIR" ]; then
-    git pull
-fi
-git clone -b dev1 https://github.com/camenduru/PanoHead $PANOHEAD_DIR
-echo "========== PanoHead克隆完成 =========="
-
-apt-get update
-apt -y install -qq aria2
-
 # Define download function
 download_file() {
     local file_url=$1
@@ -48,54 +21,63 @@ download_file() {
     fi
 }
 
-# Download models
-download_file "https://huggingface.co/camenduru/PanoHead/resolve/main/ablation-trigridD-1-025000.pkl" "$PANOHEAD_DIR/models" "ablation-trigridD-1-025000.pkl"
-download_file "https://huggingface.co/camenduru/PanoHead/resolve/main/baseline-easy-khair-025000.pkl" "$PANOHEAD_DIR/models" "baseline-easy-khair-025000.pkl"
-download_file "https://huggingface.co/camenduru/PanoHead/resolve/main/easy-khair-180-gpc0.8-trans10-025000.pkl" "$PANOHEAD_DIR/models" "easy-khair-180-gpc0.8-trans10-025000.pkl"
-echo "========== 模型下载完成 =========="
+# clone repos and install dependencies
+if [ ! -d "$PANOHEAD_DIR" ]; then
 
-# Clone and build 3DDFA_V2
-if [ -d "$DDFA_DIR" ]; then
-    git pull
+    echo "install dlib dependencies..."
+    apt-get update
+    apt -y install -qq aria2
+    apt-get install -y --no-install-recommends build-essential cmake 
+
+    git clone -b dev1 https://github.com/camenduru/PanoHead $PANOHEAD_DIR
+    echo "========== PanoHead克隆完成 =========="
+
+    cd $PANOHEAD_DIR || exit
+    # Download models
+    download_file "https://huggingface.co/camenduru/PanoHead/resolve/main/ablation-trigridD-1-025000.pkl" "$PANOHEAD_DIR/models" "ablation-trigridD-1-025000.pkl"
+    download_file "https://huggingface.co/camenduru/PanoHead/resolve/main/baseline-easy-khair-025000.pkl" "$PANOHEAD_DIR/models" "baseline-easy-khair-025000.pkl"
+    download_file "https://huggingface.co/camenduru/PanoHead/resolve/main/easy-khair-180-gpc0.8-trans10-025000.pkl" "$PANOHEAD_DIR/models" "easy-khair-180-gpc0.8-trans10-025000.pkl"
+    echo "========== 模型下载完成 =========="
+
+    echo "Install dependencies..."
+    python -m venv venv
+    venv/bin/pip install imgui glfw pyspng mrcfile ninja plyfile trimesh onnxruntime onnx 
+    venv/bin/pip install cython opencv-python click dlib tqdm imageio matplotlib scipy imageio-ffmpeg scikit-image
+
+    # Clone and build 3DDFA_V2
+    git clone -b dev https://github.com/camenduru/3DDFA_V2 $DDFA_DIR
+    cd $DDFA_DIR || exit
+    sh ./build.sh
+    
+
+    # Copy files to 3DDFA_V2 directory
+    cp -rf "$PANOHEAD_DIR/3DDFA_V2_cropping/test" "$DDFA_DIR"
+    cp "$PANOHEAD_DIR/3DDFA_V2_cropping/dlib_kps.py" "$DDFA_DIR"
+    cp "$PANOHEAD_DIR/3DDFA_V2_cropping/recrop_images.py" "$DDFA_DIR"
+    echo "========== 3DDFA_V2克隆完成 =========="
+
+    # Download shape_predictor
+    download_file "https://huggingface.co/camenduru/shape_predictor_68_face_landmarks/resolve/main/shape_predictor_68_face_landmarks.dat" "$DDFA_DIR" "shape_predictor_68_face_landmarks.dat"
+    echo "========== shape_predictor下载完成 =========="
+
+    # Prepare directories
+    mkdir -p "$WORKSPACE/in" "$WORKSPACE/stage" "$WORKSPACE/output"
+    echo "========== in, stage, output目录创建完成 =========="
+
+    cd $DDFA_DIR || exit
+    rm -r ./bfm/bfm.py
+    rm -r ./FaceBoxes/utils/nms/cpu_nms.pyx
+    git reset --hard
+    sed -i "s/if extension == '.json':/if extension != '.jpg':/g" dlib_kps.py
+    echo "========== dlib_kps.py修改完成 =========="
+    sed -i 's/np.long/np.int64/g' ./bfm/bfm.py
+    echo "========== bfm.py修改完成 =========="
+    sed -i 's/dtype=np.int)/dtype=np.int_)/g' ./FaceBoxes/utils/nms/cpu_nms.pyx
+    echo "========== cpu_nms.pyx修改完成 =========="
+
 fi
-git clone -b dev https://github.com/camenduru/3DDFA_V2 $DDFA_DIR
-cd $DDFA_DIR || exit
-sh ./build.sh
 
-# Copy files to 3DDFA_V2 directory
-cp -rf "$PANOHEAD_DIR/3DDFA_V2_cropping/test" "$DDFA_DIR"
-cp "$PANOHEAD_DIR/3DDFA_V2_cropping/dlib_kps.py" "$DDFA_DIR"
-cp "$PANOHEAD_DIR/3DDFA_V2_cropping/recrop_images.py" "$DDFA_DIR"
-echo "========== 3DDFA_V2克隆完成 =========="
-
-# Download shape_predictor
-download_file "https://huggingface.co/camenduru/shape_predictor_68_face_landmarks/resolve/main/shape_predictor_68_face_landmarks.dat" "$DDFA_DIR" "shape_predictor_68_face_landmarks.dat"
-echo "========== shape_predictor下载完成 =========="
-
-# Prepare directories
-mkdir -p "$WORKSPACE/in" "$WORKSPACE/stage" "$WORKSPACE/output"
-echo "========== in, stage, output目录创建完成 =========="
-
-# # 检查是否已经安装了ImageMagick
-# if ! command -v convert &> /dev/null; then
-#     echo "ImageMagick未安装,正在尝试安装..."
-#     apt-get install -y imagemagick
-# fi
-
-# echo "找到图片: $img_file"
-# # 检查图片是否已经是.jpg格式
-# if [[ $img_file != *.jpg ]]; then
-#     # 使用ImageMagick的convert命令将图片转换为.jpg格式
-#     convert "$img_file" test.jpg
-#     echo "将图片转换为.jpg格式"
-# else
-#     # 如果图片已经是.jpg格式，那么复制它并重命名为test.jpg
-#     cp "$img_file" test.jpg
-#     echo "图片已经是.jpg格式"
-# fi
-
-# mv test.jpg "$WORKSPACE/in/"
-# echo "========== 图片准备完成 =========="
+################## launch ##################
 
 # # prepare input images
 # # rm -rf "$WORKSPACE/stage/*" "$DDFA_DIR/crop_samples/img/*" "$DDFA_DIR/test/original/*" "$WORKSPACE/output/*"
@@ -129,17 +111,6 @@ echo "========== in, stage, output目录创建完成 =========="
 #     echo "in目录为空，无法继续"
 #     exit 1
 # fi
-
-cd $DDFA_DIR || exit
-rm -r ./bfm/bfm.py
-rm -r ./FaceBoxes/utils/nms/cpu_nms.pyx
-git reset --hard
-sed -i "s/if extension == '.json':/if extension != '.jpg':/g" dlib_kps.py
-echo "========== dlib_kps.py修改完成 =========="
-sed -i 's/np.long/np.int64/g' ./bfm/bfm.py
-echo "========== bfm.py修改完成 =========="
-sed -i 's/dtype=np.int)/dtype=np.int_)/g' ./FaceBoxes/utils/nms/cpu_nms.pyx
-echo "========== cpu_nms.pyx修改完成 =========="
 
 # # Run dlib_kps.py and recrop_images.py
 # python dlib_kps.py
