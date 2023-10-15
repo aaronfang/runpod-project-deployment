@@ -2,7 +2,6 @@ import gradio as gr
 import os
 from PIL import Image
 import subprocess
-import os
 from datetime import datetime
 
 
@@ -24,6 +23,7 @@ def generate(image_block: Image.Image, crop_chk:bool, gen_video_chk:bool):
 
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     image_name = f"image_{timestamp}"
+    # CUR_OUTPUT_DIR = OUTPUT_DIR
     CUR_OUTPUT_DIR = os.path.join(OUTPUT_DIR, image_name)
     if not os.path.exists(CUR_OUTPUT_DIR):
         os.makedirs(CUR_OUTPUT_DIR)
@@ -125,4 +125,4 @@ if __name__ == "__main__":
                 }
             )
 
-    demo.queue().launch(server_name='0.0.0.0', server_port=7860, share=True)
+    demo.queue().launch(server_name='0.0.0.0', server_port=7862, share=True)
