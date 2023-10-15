@@ -5,144 +5,120 @@ import subprocess
 import os
 
 
-# Define directories
-WORKSPACE = "/workspace"
-PANOHEAD_DIR = os.path.join(WORKSPACE, "PanoHead")
-DDFA_DIR = os.path.join(WORKSPACE, "3DDFA_V2")
-DATA_DIR = os.path.join(PANOHEAD_DIR, "data")
-SRC_DIR = os.path.join(DATA_DIR, "in")
-OUTPUT_DIR = os.path.join(DATA_DIR, "output")
+# check if there is a picture uploaded or selected
+def check_img_input(control_image):
+    if control_image is None:
+        raise gr.Error("Please select or upload an input image")
 
-# remove files in data directory
-for dir in [os.path.join(DATA_DIR, "stage"), os.path.join(DDFA_DIR, "crop_samples/img"), os.path.join(DDFA_DIR, "test/original")]:
+
+def remove_files_in_dir(dir):
     for file in os.listdir(dir):
         os.remove(os.path.join(dir, file))
 
-# check if src directory is empty
-if not os.listdir(SRC_DIR):
-    print(f"Error: {SRC_DIR} is empty.")
-    exit(1)
 
-# move first image to test/original
-FIRST_IMAGE = os.listdir(SRC_DIR)[0]
-os.rename(os.path.join(SRC_DIR, FIRST_IMAGE), os.path.join(DDFA_DIR, "test/original", FIRST_IMAGE))
-print(f"Moved {FIRST_IMAGE} to {os.path.join(DDFA_DIR, 'test/original')}")
+def generate(image_block: Image.Image, crop_chk:bool, gen_video_chk:bool):
 
-# make current output directory
-IMAGE_NAME = os.path.splitext(FIRST_IMAGE)[0]
-CUR_OUTPUT_DIR = os.path.join(OUTPUT_DIR, IMAGE_NAME)
-os.makedirs(CUR_OUTPUT_DIR, exist_ok=True)
+    for dir in [STAGE_DIR, CROP_DIR, ORG_DIR]:
+        remove_files_in_dir(dir)
 
-# crop image
-os.chdir(DDFA_DIR)
-subprocess.run(["python", "dlib_kps.py"])
-subprocess.run(["python", "recrop_images.py"])
-print("========== 重新裁切完成 ==========")
+    image_name = os.path.splitext(os.path.basename(image_block.filename))[0]
+    CUR_OUTPUT_DIR = os.path.join(OUTPUT_DIR, image_name)
+    if not os.path.exists(CUR_OUTPUT_DIR):
+        os.makedirs(CUR_OUTPUT_DIR)
+    
+    if crop_chk:
+        image_block.save(os.path.join(ORG_DIR, f'{image_name}.jpg'))
+        subprocess.run(["python", "dlib_kps.py"], cwd=DDFA_DIR)
+        subprocess.run(["python", "recrop_images.py"], cwd=DDFA_DIR)
+    else:
+        image_block.save(os.path.join(CROP_DIR, f'{image_name}.jpg'))
 
-# Run gen_videos_proj_withseg.py for pre and post videos
-for video_type in ["pre", "post"]:
-    subprocess.run(["python", "gen_videos_proj_withseg.py", "--output", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/PTI_render", f"{video_type}.mp4"), "--latent", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/projected_w.npz"), "--trunc", "0.7", "--network", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/fintuned_generator.pkl"), "--cfg", "Head"])
-    print(f"========== {video_type}.mp4生成完成 ==========")
+    # Generate ply model
+    subprocess.run(["python", "projector_withseg.py", "--num-steps", "300", "--num-steps-pti", "300", "--shapes", "True", "--outdir", CUR_OUTPUT_DIR, "--target_img", STAGE_DIR, "--network", os.path.join(PANOHEAD_DIR, "models/easy-khair-180-gpc0.8-trans10-025000.pkl"), "--idx", "0"], cwd=PANOHEAD_DIR)
 
-# Generate ply model
-os.chdir(PANOHEAD_DIR)
-subprocess.run(["python", "projector_withseg.py", "--num-steps", "300", "--num-steps-pti", "300", "--shapes", "True", "--outdir", CUR_OUTPUT_DIR, "--target_img", os.path.join(DATA_DIR, "stage"), "--network", os.path.join(PANOHEAD_DIR, "models/easy-khair-180-gpc0.8-trans10-025000.pkl"), "--idx", "0"])
-print("========== ply model生成完成 ==========")
+    if gen_video_chk:
+        for video_type in ["pre", "post"]:
+            subprocess.run(["python", "gen_videos_proj_withseg.py", "--output", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/PTI_render", f"{video_type}.mp4"), "--latent", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/projected_w.npz"), "--trunc", "0.7", "--network", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/fintuned_generator.pkl"), "--cfg", "Head"], cwd=PANOHEAD_DIR)
+
+        return os.path.join(CUR_OUTPUT_DIR, 'geometry.ply'), os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/PTI_render", "post.mp4")
+    else:
+        return os.path.join(CUR_OUTPUT_DIR, 'geometry.ply'), None
 
 
-# # check if there is a picture uploaded or selected
-# def check_img_input(control_image):
-#     if control_image is None:
-#         raise gr.Error("Please select or upload an input image")
+if __name__ == "__main__":
+    _TITLE = '''PanoHead: Geometry-Aware 3D Full-Head Synthesis in 360°'''
 
+    _DESCRIPTION = '''PanoHead is a geometry-aware 3D full-head synthesis method that can generate a 3D head model from a single portrait image in 360°. It is based on the [3DDFA_V2](https://github.com/cleardusk/3DDFA_V2) and [PanoHead](https://github.com/SizheAn/PanoHead) projects. This demo is based on the [gradio](https://gradio.app/) library.'''
 
-# def optimize_stage_1(image_block: Image.Image, preprocess_chk: bool, elevation_slider: float):
-#     if not os.path.exists('tmp_data'):
-#         os.makedirs('tmp_data')
-#     if preprocess_chk:
-#         # save image to a designated path
-#         image_block.save(os.path.join('tmp_data', 'tmp.png'))
+    _IMG_USER_GUIDE = '''## How to use this demo
+                            1. Upload or select an image from the examples below.
+                            2. Click the "Generate 3D" button.
+                            3. Wait for the model to be generated.
+                            4. Click the "Download" button to download the model.
+                            5. Click the "Generate video" button to generate a video of the model rotating.
+                            6. Click the "Download" button to download the video.
+                            7. Click the "Clear" button to clear the output.
+                            8. Repeat steps 1-7 to generate more models.'''
 
-#         # preprocess image
-#         print(f'python process.py {os.path.join("tmp_data", "tmp.png")}')
-#         subprocess.run(f'python process.py {os.path.join("tmp_data", "tmp.png")}', shell=True)
-#     else:
-#         image_block.save(os.path.join('tmp_data', 'tmp_rgba.png'))
+    # load images in 'data' folder as examples
+    example_folder = os.path.join(os.path.dirname(__file__), 'data')
+    example_fns = os.listdir(example_folder)
+    example_fns.sort()
+    examples_full = [os.path.join(example_folder, x) for x in example_fns if x.endswith('.png')]
 
-#     # stage 1
-#     subprocess.run(f'python main.py --config {os.path.join("configs", "image.yaml")} input={os.path.join("tmp_data", "tmp_rgba.png")} save_path=tmp mesh_format=glb elevation={elevation_slider} force_cuda_rast=True', shell=True)
+    # Define directories
+    WORKSPACE = "/workspace"
+    PANOHEAD_DIR = os.path.join(WORKSPACE, "PanoHead")
+    DDFA_DIR = os.path.join(WORKSPACE, "3DDFA_V2")
+    ORG_DIR = os.path.join(DDFA_DIR, "test/original")
+    CROP_DIR = os.path.join(DDFA_DIR, "crop_samples/img")
+    DATA_DIR = os.path.join(PANOHEAD_DIR, "data")
+    STAGE_DIR = os.path.join(DATA_DIR, "stage")
+    OUTPUT_DIR = os.path.join(DATA_DIR, "output")
 
-#     return os.path.join('logs', 'tmp_mesh.glb')
+    # Compose demo layout & data flow
+    with gr.Blocks(title=_TITLE, theme=gr.themes.Soft()) as demo:
+        with gr.Row():
+            with gr.Column(scale=1):
+                gr.Markdown('# ' + _TITLE)
+        gr.Markdown(_DESCRIPTION)
 
+        # Image-to-3D
+        with gr.Row(variant='panel'):
+            with gr.Column(scale=5):
+                image_block = gr.Image(type='pil', image_mode='RGBA', height=290, label='Input image', tool=None)
 
-# def optimize_stage_2(elevation_slider: float):
-#     # stage 2
-#     subprocess.run(f'python main2.py --config {os.path.join("configs", "image.yaml")} input={os.path.join("tmp_data", "tmp_rgba.png")} save_path=tmp mesh_format=glb elevation={elevation_slider} force_cuda_rast=True', shell=True)
+                crop_chk = gr.Checkbox(True, label='Re-Crop Image to Face Only')
+                gen_video_chk = gr.Checkbox(True, label='Generate Video')
 
-#     return os.path.join('logs', 'tmp.glb')
+                # gr.Examples(
+                #     examples=examples_full,  # NOTE: elements must match inputs list!
+                #     inputs=[image_block],
+                #     outputs=[image_block],
+                #     cache_examples=False,
+                #     label='Examples (click one of the images below to start)',
+                #     examples_per_page=40
+                # )
 
+                img_run_btn = gr.Button("Generate")
+                img_guide_text = gr.Markdown(_IMG_USER_GUIDE, visible=True)
 
-# if __name__ == "__main__":
-#     _TITLE = '''DreamGaussian: Generative Gaussian Splatting for Efficient 3D Content Creation'''
+            with gr.Column(scale=5):
+                # display post.mp4
+                video_block = gr.Video(type='mp4', label='Output video', height=290, width=290, tool=None)
+                obj3d = gr.Model3D(clear_color=[0.0, 0.0, 0.0, 0.0], label="3D Model (Final)")
 
-#     _DESCRIPTION = '''
-#     <div>
-#     <a style="display:inline-block" href="https://dreamgaussian.github.io"><img src='https://img.shields.io/badge/public_website-8A2BE2'></a>
-#     <a style="display:inline-block; margin-left: .5em" href="https://arxiv.org/abs/2309.16653"><img src="https://img.shields.io/badge/2309.16653-f9f7f7?logo=data:image/png;base64,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"></a>
-#     <a style="display:inline-block; margin-left: .5em" href='https://github.com/dreamgaussian/dreamgaussian'><img src='https://img.shields.io/github/stars/dreamgaussian/dreamgaussian?style=social'/></a>
-#     </div>
-#     We present DreamGausssion, a 3D content generation framework that significantly improves the efficiency of 3D content creation. 
-#     '''
-#     _IMG_USER_GUIDE = "Please upload an image in the block above (or choose an example above) and click **Generate 3D**."
+            # if there is an input image, continue with inference
+            # else display an error message
+            img_run_btn.click(check_img_input, inputs=[image_block], queue=False).success(
+                generate,
+                inputs=[image_block, crop_chk, gen_video_chk],
+                outputs=[obj3d, video_block]
+            ).then(
+                lambda results: {
+                    'obj3d': results[0],
+                    'video_block': results[1] if results[1] is not None else 'No video generated'
+                }
+            )
 
-#     # load images in 'data' folder as examples
-#     example_folder = os.path.join(os.path.dirname(__file__), 'data')
-#     example_fns = os.listdir(example_folder)
-#     example_fns.sort()
-#     examples_full = [os.path.join(example_folder, x) for x in example_fns if x.endswith('.png')]
-
-#     # Compose demo layout & data flow
-#     with gr.Blocks(title=_TITLE, theme=gr.themes.Soft()) as demo:
-#         with gr.Row():
-#             with gr.Column(scale=1):
-#                 gr.Markdown('# ' + _TITLE)
-#         gr.Markdown(_DESCRIPTION)
-
-#         # Image-to-3D
-#         with gr.Row(variant='panel'):
-#             with gr.Column(scale=5):
-#                 image_block = gr.Image(type='pil', image_mode='RGBA', height=290, label='Input image', tool=None)
-
-#                 elevation_slider = gr.Slider(-90, 90, value=0, step=1, label='Estimated elevation angle')
-#                 gr.Markdown(
-#                     "default to 0 (horizontal), range from [-90, 90]. If you upload a look-down image, try a value like -30")
-
-#                 preprocess_chk = gr.Checkbox(True,
-#                                              label='Preprocess image automatically (remove background and recenter object)')
-
-#                 gr.Examples(
-#                     examples=examples_full,  # NOTE: elements must match inputs list!
-#                     inputs=[image_block],
-#                     outputs=[image_block],
-#                     cache_examples=False,
-#                     label='Examples (click one of the images below to start)',
-#                     examples_per_page=40
-#                 )
-#                 img_run_btn = gr.Button("Generate 3D")
-#                 img_guide_text = gr.Markdown(_IMG_USER_GUIDE, visible=True)
-
-#             with gr.Column(scale=5):
-#                 obj3d_stage1 = gr.Model3D(clear_color=[0.0, 0.0, 0.0, 0.0], label="3D Model (Stage 1)")
-#                 obj3d = gr.Model3D(clear_color=[0.0, 0.0, 0.0, 0.0], label="3D Model (Final)")
-
-#             # if there is an input image, continue with inference
-#             # else display an error message
-#             img_run_btn.click(check_img_input, inputs=[image_block], queue=False).success(optimize_stage_1,
-#                                                                                           inputs=[image_block,
-#                                                                                                   preprocess_chk,
-#                                                                                                   elevation_slider],
-#                                                                                           outputs=[
-#                                                                                               obj3d_stage1]).success(
-#                 optimize_stage_2, inputs=[elevation_slider], outputs=[obj3d])
-
-#     demo.queue().launch(share=True)
+    demo.queue().launch(server_name='0.0.0.0', server_port=7860, share=True)
