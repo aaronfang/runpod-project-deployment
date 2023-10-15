@@ -29,10 +29,12 @@ def generate(image_block: Image.Image, crop_chk:bool, gen_video_chk:bool):
         os.makedirs(CUR_OUTPUT_DIR)
     
     if crop_chk:
+        image_block = image_block.convert("RGB")
         image_block.save(os.path.join(ORG_DIR, f'{image_name}.jpg'))
         subprocess.run(["python", "dlib_kps.py"], cwd=DDFA_DIR)
         subprocess.run(["python", "recrop_images.py"], cwd=DDFA_DIR)
     else:
+        image_block = image_block.convert("RGB")
         image_block.save(os.path.join(CROP_DIR, f'{image_name}.jpg'))
 
     # Generate ply model
@@ -62,11 +64,11 @@ if __name__ == "__main__":
                             7. Click the "Clear" button to clear the output.
                             8. Repeat steps 1-7 to generate more models.'''
 
-    # load images in 'data' folder as examples
-    example_folder = os.path.join(os.path.dirname(__file__), 'data')
-    example_fns = os.listdir(example_folder)
-    example_fns.sort()
-    examples_full = [os.path.join(example_folder, x) for x in example_fns if x.endswith('.png')]
+    # # load images in 'data' folder as examples
+    # example_folder = os.path.join(os.path.dirname(__file__), 'data')
+    # example_fns = os.listdir(example_folder)
+    # example_fns.sort()
+    # examples_full = [os.path.join(example_folder, x) for x in example_fns if x.endswith('.png')]
 
     # Define directories
     WORKSPACE = "/workspace"
@@ -88,7 +90,7 @@ if __name__ == "__main__":
         # Image-to-3D
         with gr.Row(variant='panel'):
             with gr.Column(scale=5):
-                image_block = gr.Image(type='pil', image_mode='RGBA', height=290, label='Input image', tool=None)
+                image_block = gr.Image(type='pil', image_mode='RGB', height=290, label='Input image', tool=None)
 
                 crop_chk = gr.Checkbox(True, label='Re-Crop Image to Face Only')
                 gen_video_chk = gr.Checkbox(True, label='Generate Video')
@@ -118,8 +120,8 @@ if __name__ == "__main__":
                 outputs=[obj3d, video_block]
             ).then(
                 lambda results: {
-                    'obj3d': results[0],
-                    'video_block': results[1] if results[1] is not None else 'No video generated'
+                    'obj3d': results[0] if results is not None else None,
+                    'video_block': results[1] if results and results[1] is not None else 'No video generated'
                 }
             )
 
