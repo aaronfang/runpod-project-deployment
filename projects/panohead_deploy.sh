@@ -2,7 +2,7 @@
 
 # Define directories
 # current dir as abs path
-CUR_DIR=$(cd "$(dirname "$0")"; pwd)
+CUR_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 WORKSPACE="/workspace"
 PANOHEAD_DIR="$WORKSPACE/PanoHead"
 DDFA_DIR="$WORKSPACE/3DDFA_V2"
