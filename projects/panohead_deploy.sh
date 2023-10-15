@@ -1,10 +1,13 @@
 #!/bin/bash
 
 # Define directories
+# current dir as abs path
+CUR_DIR=$(cd "$(dirname "$0")"; pwd)
 WORKSPACE="/workspace"
 PANOHEAD_DIR="$WORKSPACE/PanoHead"
 DDFA_DIR="$WORKSPACE/3DDFA_V2"
 DATA_DIR="$PANOHEAD_DIR/data"
+SERVER_PORT=7860    # 服务器端口
 
 # Define download function
 download_file() {
@@ -74,7 +77,31 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
     # sed -i 's/max_batch = .*/max_batch = 3000000/g' "$PANOHEAD_DIR/projector_withseg.py"
     # echo "========== projector_withseg.py修改完成 =========="
 
+    # copy panohead_gradio.py from CUR_DIR to PanoHead directory
+    cp "$CUR_DIR/panohead_gradio.py" "$PANOHEAD_DIR"
+    echo "========== panohead_gradio.py复制完成 =========="
+
 fi
+
+# Check if port is occupied, if occupied, increment the port number
+while lsof -Pi :${SERVER_PORT} -sTCP:LISTEN -t >/dev/null ; do
+    echo "Port ${SERVER_PORT} is occupied. Trying next port..."
+    SERVER_PORT=$((SERVER_PORT+1))
+done
+
+echo "Selected Port: ${SERVER_PORT}"
+
+# check if panohead_gradio.py exists in PANOHEAD_DIR, if exists, modify the file, replace block.launch() with block.launch(server_name="0.0.0.0")
+if [ -f "${PANOHEAD_DIR}/panohead_gradio.py" ]; then
+    cd "${PANOHEAD_DIR}" || exit
+    echo "panohead_gradio.py exists. Modifying the file..."
+    sed -i -E "s/demo\.queue\(\)\.launch\((server_name=\"0.0.0.0\", )?(server_port=[0-9]+)?\)/demo.queue().launch(server_name=\"0.0.0.0\", server_port=${SERVER_PORT})/g" "${PANOHEAD_DIR}/panohead_gradio.py"
+fi
+
+# Run the server
+echo "Running the server..."
+cd "${PANOHEAD_DIR}" || exit
+venv/bin/python panohead_gradio.py
 
 ################## launch ##################
 
