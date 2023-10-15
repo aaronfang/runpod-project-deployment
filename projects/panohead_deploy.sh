@@ -39,8 +39,9 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
     echo "Install dependencies..."
     cd $PANOHEAD_DIR || exit
     python -m venv venv
-    venv/bin/pip install imgui glfw pyspng mrcfile ninja plyfile trimesh onnxruntime onnx 
-    venv/bin/pip install cython opencv-python click dlib tqdm imageio matplotlib scipy imageio-ffmpeg scikit-image
+    source venv/bin/activate
+    pip install imgui glfw pyspng mrcfile ninja plyfile trimesh onnxruntime onnx 
+    pip install cython opencv-python click dlib tqdm imageio matplotlib scipy imageio-ffmpeg scikit-image gradio
 
     # Clone and build 3DDFA_V2
     git clone -b dev https://github.com/camenduru/3DDFA_V2 $DDFA_DIR
