@@ -3,6 +3,7 @@ import os
 from PIL import Image
 import subprocess
 import os
+from datetime import datetime
 
 
 # check if there is a picture uploaded or selected
@@ -21,7 +22,8 @@ def generate(image_block: Image.Image, crop_chk:bool, gen_video_chk:bool):
     for dir in [STAGE_DIR, CROP_DIR, ORG_DIR]:
         remove_files_in_dir(dir)
 
-    image_name = os.path.splitext(os.path.basename(image_block.filename))[0]
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    image_name = f"image_{timestamp}"
     CUR_OUTPUT_DIR = os.path.join(OUTPUT_DIR, image_name)
     if not os.path.exists(CUR_OUTPUT_DIR):
         os.makedirs(CUR_OUTPUT_DIR)
@@ -55,7 +57,7 @@ if __name__ == "__main__":
                             2. Click the "Generate 3D" button.
                             3. Wait for the model to be generated.
                             4. Click the "Download" button to download the model.
-                            5. Click the "Generate video" button to generate a video of the model rotating.
+                            5. Check the "Generate video" box to generate a video of the model rotating.
                             6. Click the "Download" button to download the video.
                             7. Click the "Clear" button to clear the output.
                             8. Repeat steps 1-7 to generate more models.'''
