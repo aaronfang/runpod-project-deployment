@@ -70,12 +70,13 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
     mkdir -p "$DATA_DIR" "$DATA_DIR/stage" "$DATA_DIR/output"
     echo "========== data, stage, output目录创建完成 =========="
 
+    pip install --force-reinstall numpy==1.23.5
     # sed -i "s/if extension == '.json':/if extension != '.jpg':/g" "$DDFA_DIR/dlib_kps.py"
     # echo "========== dlib_kps.py修改完成 =========="
-    sed -i 's/np.long/np.int64/g' "$DDFA_DIR/bfm/bfm.py"
-    echo "========== bfm.py修改完成 =========="
-    sed -i 's/dtype=np.int)/dtype=np.int_)/g' "$DDFA_DIR/FaceBoxes/utils/nms/cpu_nms.pyx"
-    echo "========== cpu_nms.pyx修改完成 =========="
+    # sed -i 's/np.long/np.int64/g' "$DDFA_DIR/bfm/bfm.py"
+    # echo "========== bfm.py修改完成 =========="
+    # sed -i 's/dtype=np.int)/dtype=np.int_)/g' "$DDFA_DIR/FaceBoxes/utils/nms/cpu_nms.pyx"
+    # echo "========== cpu_nms.pyx修改完成 =========="
     # sed -i 's/max_batch = .*/max_batch = 3000000/g' "$PANOHEAD_DIR/projector_withseg.py"
     # echo "========== projector_withseg.py修改完成 =========="
 
