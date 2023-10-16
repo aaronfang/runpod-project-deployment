@@ -3,6 +3,7 @@ import os
 from PIL import Image
 import subprocess
 from datetime import datetime
+import shutil
 
 
 # check if there is a picture uploaded or selected
@@ -16,7 +17,7 @@ def remove_files_in_dir(dir):
         os.remove(os.path.join(dir, file))
 
 
-def generate(image_block: Image.Image, crop_chk:bool, gen_video_chk:bool):
+def generate(image_block: Image.Image, crop_chk:bool):
 
     for dir in [STAGE_DIR, CROP_DIR, ORG_DIR]:
         remove_files_in_dir(dir)
@@ -37,16 +38,14 @@ def generate(image_block: Image.Image, crop_chk:bool, gen_video_chk:bool):
         image_block = image_block.convert("RGB")
         image_block.save(os.path.join(CROP_DIR, f'{image_name}.jpg'))
 
+    # copy image from CROP_DIR to STAGE_DIR
+    for file in os.listdir(CROP_DIR):
+        shutil.copy2(os.path.join(CROP_DIR, file), STAGE_DIR)
+    
     # Generate ply model
-    subprocess.run(["python", "projector_withseg.py", "--num-steps", "300", "--num-steps-pti", "300", "--shapes", "True", "--outdir", CUR_OUTPUT_DIR, "--target_img", STAGE_DIR, "--network", os.path.join(PANOHEAD_DIR, "models/easy-khair-180-gpc0.8-trans10-025000.pkl"), "--idx", "0"], cwd=PANOHEAD_DIR)
+    subprocess.run(["python", "projector_withseg.py", "--num-steps", "300", "--num-steps-pti", "300", "--shapes", "True", "--outdir", CUR_OUTPUT_DIR, "--target_img", STAGE_DIR, "--network", os.path.join(PANOHEAD_DIR, f"models/{image_name}"), "--idx", "0"], cwd=PANOHEAD_DIR)
 
-    if gen_video_chk:
-        for video_type in ["pre", "post"]:
-            subprocess.run(["python", "gen_videos_proj_withseg.py", "--output", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/PTI_render", f"{video_type}.mp4"), "--latent", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/projected_w.npz"), "--trunc", "0.7", "--network", os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/fintuned_generator.pkl"), "--cfg", "Head"], cwd=PANOHEAD_DIR)
-
-        return os.path.join(CUR_OUTPUT_DIR, 'geometry.ply'), os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl/0/PTI_render", "post.mp4")
-    else:
-        return os.path.join(CUR_OUTPUT_DIR, 'geometry.ply'), None
+    return [os.path.join(CUR_OUTPUT_DIR, 'geometry.ply'), os.path.join(CUR_OUTPUT_DIR, f"models/{image_name}", "proj.mp4")]
 
 
 if __name__ == "__main__":
@@ -63,12 +62,6 @@ if __name__ == "__main__":
                             6. Click the "Download" button to download the video.
                             7. Click the "Clear" button to clear the output.
                             8. Repeat steps 1-7 to generate more models.'''
-
-    # # load images in 'data' folder as examples
-    # example_folder = os.path.join(os.path.dirname(__file__), 'data')
-    # example_fns = os.listdir(example_folder)
-    # example_fns.sort()
-    # examples_full = [os.path.join(example_folder, x) for x in example_fns if x.endswith('.png')]
 
     # Define directories
     WORKSPACE = "/workspace"
@@ -93,18 +86,9 @@ if __name__ == "__main__":
                 image_block = gr.Image(type='pil', image_mode='RGB', height=290, label='Input image', tool=None)
 
                 crop_chk = gr.Checkbox(True, label='Re-Crop Image to Face Only')
-                gen_video_chk = gr.Checkbox(True, label='Generate Video')
-
-                # gr.Examples(
-                #     examples=examples_full,  # NOTE: elements must match inputs list!
-                #     inputs=[image_block],
-                #     outputs=[image_block],
-                #     cache_examples=False,
-                #     label='Examples (click one of the images below to start)',
-                #     examples_per_page=40
-                # )
 
                 img_run_btn = gr.Button("Generate")
+                
                 img_guide_text = gr.Markdown(_IMG_USER_GUIDE, visible=True)
 
             with gr.Column(scale=5):
@@ -116,7 +100,7 @@ if __name__ == "__main__":
             # else display an error message
             img_run_btn.click(check_img_input, inputs=[image_block], queue=False).success(
                 generate,
-                inputs=[image_block, crop_chk, gen_video_chk],
+                inputs=[image_block, crop_chk],
                 outputs=[obj3d, video_block]
             ).then(
                 lambda results: {
@@ -125,4 +109,4 @@ if __name__ == "__main__":
                 }
             )
 
-    demo.queue().launch(server_name='0.0.0.0', server_port=7862, share=True)
+    demo.queue().launch(server_name='0.0.0.0', share=True)
