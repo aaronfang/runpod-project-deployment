@@ -33,7 +33,7 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
     apt -y install -qq aria2
     apt-get install -y --no-install-recommends build-essential cmake 
 
-    git clone -b dev1 https://github.com/camenduru/PanoHead $PANOHEAD_DIR
+    git clone https://github.com/aaronfang/PanoHead.git $PANOHEAD_DIR
     echo "========== PanoHead克隆完成 =========="
 
     echo "Install dependencies..."
@@ -55,7 +55,7 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
 
 
     # Clone and build 3DDFA_V2
-    git clone -b dev https://github.com/camenduru/3DDFA_V2 $DDFA_DIR
+    git clone https://github.com/aaronfang/3DDFA_V2.git $DDFA_DIR
     cd $DDFA_DIR || exit
     sh ./build.sh
     
@@ -90,9 +90,9 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
     # sed -i 's/max_batch = .*/max_batch = 3000000/g' "$PANOHEAD_DIR/projector_withseg.py"
     # echo "========== projector_withseg.py修改完成 =========="
 
-    # copy panohead_gradio.py from CUR_DIR to PanoHead directory
-    cp "$CUR_DIR/panohead_gradio.py" "$PANOHEAD_DIR"
-    echo "========== panohead_gradio.py复制完成 =========="
+    # # copy panohead_gradio.py from CUR_DIR to PanoHead directory
+    # cp "$CUR_DIR/panohead_gradio.py" "$PANOHEAD_DIR"
+    # echo "========== panohead_gradio.py复制完成 =========="
 
 fi
 
