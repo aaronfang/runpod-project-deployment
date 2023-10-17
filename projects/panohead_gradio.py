@@ -4,6 +4,11 @@ from PIL import Image
 import subprocess
 from datetime import datetime
 import shutil
+import webbrowser
+
+
+def open_output_dir():
+    webbrowser.open(OUTPUT_DIR)
 
 
 # check if there is a picture uploaded or selected
@@ -13,8 +18,9 @@ def check_img_input(control_image):
 
 
 def remove_files_in_dir(dir):
-    for file in os.listdir(dir):
-        os.remove(os.path.join(dir, file))
+    if os.path.exists(dir):
+        for file in os.listdir(dir):
+            os.remove(os.path.join(dir, file))
 
 
 def generate(image_block: Image.Image, crop_chk:bool):
@@ -26,26 +32,30 @@ def generate(image_block: Image.Image, crop_chk:bool):
     image_name = f"image_{timestamp}"
     # CUR_OUTPUT_DIR = OUTPUT_DIR
     CUR_OUTPUT_DIR = os.path.join(OUTPUT_DIR, image_name)
-    if not os.path.exists(CUR_OUTPUT_DIR):
-        os.makedirs(CUR_OUTPUT_DIR)
+    os.makedirs(CUR_OUTPUT_DIR, exist_ok=True)
     
+    image_block = image_block.convert("RGB")
+    save_dir = ORG_DIR if crop_chk else CROP_DIR
+    image_block.save(os.path.join(save_dir, f'{image_name}.jpg'))
+
     if crop_chk:
-        image_block = image_block.convert("RGB")
-        image_block.save(os.path.join(ORG_DIR, f'{image_name}.jpg'))
-        subprocess.run(["python", "dlib_kps.py"], cwd=DDFA_DIR)
-        subprocess.run(["python", "recrop_images.py"], cwd=DDFA_DIR)
-    else:
-        image_block = image_block.convert("RGB")
-        image_block.save(os.path.join(CROP_DIR, f'{image_name}.jpg'))
+        subprocess.run(["python", "dlib_kps.py"], cwd=DDFA_DIR, check=True)
+        subprocess.run(["python", "recrop_images.py"], cwd=DDFA_DIR, check=True)
 
     # copy image from CROP_DIR to STAGE_DIR
     for file in os.listdir(CROP_DIR):
         shutil.copy2(os.path.join(CROP_DIR, file), STAGE_DIR)
     
-    # Generate ply model
-    subprocess.run(["python", "projector_withseg.py", "--num-steps", "300", "--num-steps-pti", "300", "--shapes", "True", "--outdir", CUR_OUTPUT_DIR, "--target_img", STAGE_DIR, "--network", os.path.join(PANOHEAD_DIR, f"models/{image_name}"), "--idx", "0"], cwd=PANOHEAD_DIR)
+    croped_img_dir = os.path.join(STAGE_DIR, f'{image_name}.jpg')
+    
+    sub_dir = os.path.join(CUR_OUTPUT_DIR, "easy-khair-180-gpc0.8-trans10-025000.pkl", "0")
 
-    return [os.path.join(CUR_OUTPUT_DIR, 'geometry.ply'), os.path.join(CUR_OUTPUT_DIR, f"models/{image_name}", "proj.mp4")]
+    # Generate ply model and videos
+    subprocess.run(["python", "projector_withseg.py", "--num-steps", "300", "--num-steps-pti", "300", "--shapes", "True", "--outdir", CUR_OUTPUT_DIR, "--target_img", STAGE_DIR, "--network", os.path.join(PANOHEAD_DIR, "models/easy-khair-180-gpc0.8-trans10-025000.pkl"), "--idx", "0"], cwd=PANOHEAD_DIR, check=True)
+    subprocess.run(["python", "gen_videos_proj_withseg.py", "--output", os.path.join(sub_dir, "PTI_render", "pre.mp4"), "--latent", os.path.join(sub_dir, "projected_w.npz"), "--trunc", "0.7", "--network", "./models/easy-khair-180-gpc0.8-trans10-025000.pkl", "--cfg", "Head"], check=True)
+    subprocess.run(["python", "gen_videos_proj_withseg.py", "--output", os.path.join(sub_dir, "PTI_render", "post.mp4"), "--latent", os.path.join(sub_dir, "projected_w.npz"), "--trunc", "0.7", "--network", os.path.join(sub_dir, "fintuned_generator.pkl"), "--cfg", "Head"], check=True)
+
+    return [croped_img_dir, os.path.join(sub_dir, "PTI_render", "pre.mp4"), os.path.join(sub_dir, "PTI_render", "post.mp4"), os.path.join(sub_dir, "proj.mp4")]
 
 
 if __name__ == "__main__":
@@ -55,7 +65,7 @@ if __name__ == "__main__":
 
     _IMG_USER_GUIDE = '''## How to use this demo
                             1. Upload or select an image from the examples below.
-                            2. Click the "Generate 3D" button.
+                            2. Click the "Generate" button.
                             3. Wait for the model to be generated.
                             4. Click the "Download" button to download the model.
                             5. Check the "Generate video" box to generate a video of the model rotating.
@@ -65,6 +75,7 @@ if __name__ == "__main__":
 
     # Define directories
     WORKSPACE = "/workspace"
+    # WORKSPACE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     PANOHEAD_DIR = os.path.join(WORKSPACE, "PanoHead")
     DDFA_DIR = os.path.join(WORKSPACE, "3DDFA_V2")
     ORG_DIR = os.path.join(DDFA_DIR, "test/original")
@@ -79,34 +90,42 @@ if __name__ == "__main__":
             with gr.Column(scale=1):
                 gr.Markdown('# ' + _TITLE)
         gr.Markdown(_DESCRIPTION)
+        with gr.Row():
+            with gr.Column(scale=1):
+                image_block = gr.Image(type='pil', image_mode='RGB', height=290, label='Input image', tool=None)
+            with gr.Column(scale=1):
+                crop_image_block = gr.Image(type='pil', image_mode='RGB', height=290, label='Cropped image', tool=None)
 
         # Image-to-3D
         with gr.Row(variant='panel'):
             with gr.Column(scale=5):
-                image_block = gr.Image(type='pil', image_mode='RGB', height=290, label='Input image', tool=None)
-
                 crop_chk = gr.Checkbox(True, label='Re-Crop Image to Face Only')
-
                 img_run_btn = gr.Button("Generate")
-                
+                open_output_dir_btn = gr.Button("Open Output Directory")
                 img_guide_text = gr.Markdown(_IMG_USER_GUIDE, visible=True)
 
             with gr.Column(scale=5):
-                # display post.mp4
-                video_block = gr.Video(type='mp4', label='Output video', height=290, width=290, tool=None)
-                obj3d = gr.Model3D(clear_color=[0.0, 0.0, 0.0, 0.0], label="3D Model (Final)")
+                with gr.Row():
+                    pre_video_block = gr.Video(label='Pre.mp4', height=290, width=290)
+                    post_video_block = gr.Video(label='Post.mp4', height=290, width=290)
+                proj_video_block = gr.Video(label='Proj.mp4', height=290)
+                # obj3d = gr.Model3D(clear_color=[0.0, 0.0, 0.0, 0.0], label="3D Model (Final)")
 
-            # if there is an input image, continue with inference
             # else display an error message
             img_run_btn.click(check_img_input, inputs=[image_block], queue=False).success(
                 generate,
                 inputs=[image_block, crop_chk],
-                outputs=[obj3d, video_block]
+                outputs=[proj_video_block, pre_video_block, post_video_block, crop_image_block]
             ).then(
                 lambda results: {
-                    'obj3d': results[0] if results is not None else None,
-                    'video_block': results[1] if results and results[1] is not None else 'No video generated'
+                    # 'obj3d': results[0] if results is not None else None,
+                    'crop_image_block': results[0] if results and results[0] is not None else 'No cropped image generated',
+                    'pre_video_block': results[1] if results and results[1] is not None else 'No pre video generated',
+                    'post_video_block': results[2] if results and results[2] is not None else 'No post video generated',
+                    'proj_video_block': results[3] if results and results[3] is not None else 'No proj video generated',
                 }
             )
 
-    demo.queue().launch(server_name='0.0.0.0', share=True)
+            open_output_dir_btn.click(open_output_dir)
+
+    demo.queue().launch()

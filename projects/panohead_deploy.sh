@@ -44,6 +44,16 @@ if [ ! -d "$PANOHEAD_DIR" ]; then
     pip install cython opencv-python click dlib tqdm imageio matplotlib scipy imageio-ffmpeg scikit-image
     pip install torch torchvision gradio
 
+    # check cudatoolkit installed or not, install if not.
+    # wsl/ubutnu:
+    #   wget https://developer.download.nvidia.com/compute/cuda/12.2.2/local_installers/cuda_12.2.2_535.104.05_linux.run
+    #   sudo sh cuda_12.2.2_535.104.05_linux.run
+    # check if CUDA_HOME is set, nvcc --version
+    # export CUDA_HOME=/usr/local/cuda
+    # export PATH=$PATH:$CUDA_HOME/bin
+    # export LD_LIBRARY_PATH=/usr/local/cuda-12.2/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+
     # Clone and build 3DDFA_V2
     git clone -b dev https://github.com/camenduru/3DDFA_V2 $DDFA_DIR
     cd $DDFA_DIR || exit
