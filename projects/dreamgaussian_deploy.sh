@@ -9,7 +9,8 @@ if [ ! -d "${DREAMGAUSSIAN_DIR}" ]; then
     cd "${ROOT_DIR}" || exit
     echo "Cloning main repository..."
     git lfs install
-    git clone https://huggingface.co/spaces/jiawei011/dreamgaussian "${DREAMGAUSSIAN_DIR}"
+    # git clone https://huggingface.co/spaces/jiawei011/dreamgaussian "${DREAMGAUSSIAN_DIR}"
+    git clone https://github.com/dreamgaussian/dreamgaussian.git "${DREAMGAUSSIAN_DIR}"
 
     # create a virtual environment
     cd "${DREAMGAUSSIAN_DIR}" || exit
