@@ -14,16 +14,15 @@ if [ ! -d "${REPO_DIR}" ]; then
 
     # Install colmap
     apt update
-    apt install colmap
+    apt install -y colmap ffmpeg ImageMagick
 
     # Navigate into the cloned directory
     cd "${REPO_DIR}" || exit
-    python -m venv venv
 
     echo "installing requirements..."
-    venv/bin/pip install -q plyfile ffmpeg
-    venv/bin/pip install -q https://huggingface.co/camenduru/gaussian-splatting/resolve/main/diff_gaussian_rasterization-0.0.0-cp310-cp310-linux_x86_64.whl
-    venv/bin/pip install -q https://huggingface.co/camenduru/gaussian-splatting/resolve/main/simple_knn-0.0.0-cp310-cp310-linux_x86_64.whl
+    pip install -q plyfile
+    pip install -q https://huggingface.co/camenduru/gaussian-splatting/resolve/main/diff_gaussian_rasterization-0.0.0-cp310-cp310-linux_x86_64.whl
+    pip install -q https://huggingface.co/camenduru/gaussian-splatting/resolve/main/simple_knn-0.0.0-cp310-cp310-linux_x86_64.whl
 
     echo "Creating data directory..."
     mkdir -p "${DATA_DIR}"
@@ -31,11 +30,11 @@ if [ ! -d "${REPO_DIR}" ]; then
     echo "Creating images directory..."
     mkdir -p "${DATA_DIR}/images"
 
-    echo "Creating sparse directory..."
-    mkdir -p "${DATA_DIR}/sparse"
+    # echo "Creating sparse directory..."
+    # mkdir -p "${DATA_DIR}/sparse"
 
-    echo "Creating output directory..."
-    mkdir -p "${ROOT_DIR}/output"
+    # echo "Creating output directory..."
+    # mkdir -p "${ROOT_DIR}/output"
 fi
 
 # Check if port is occupied, if occupied, increment the port number
@@ -48,4 +47,4 @@ echo "Selected Port: ${SERVER_PORT}"
 
 # copy python script from current script dir to the repo folder and run it
 cp "${SCRIPT_DIR}/gaussian_splatting_gradio.py" "${REPO_DIR}/gaussian_splatting_gradio.py"
-venv/bin/python "${REPO_DIR}/gaussian_splatting_gradio.py" --server_name "0.0.0.0" --server_port "${SERVER_PORT}"
+python "${REPO_DIR}/gaussian_splatting_gradio.py" --server_name "0.0.0.0" --server_port "${SERVER_PORT}"
