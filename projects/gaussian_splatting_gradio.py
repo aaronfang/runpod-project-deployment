@@ -1,6 +1,7 @@
 import gradio as gr
 import os
 import subprocess
+import argparse
 
 ROOT_DIR = "/workspace/gaussian-splatting-deploy"
 REPO_DIR = f"{ROOT_DIR}/gaussian-splatting"
@@ -23,22 +24,38 @@ def run_colmap_and_train():
     for command in commands:
         subprocess.run(command, shell=True, check=True)
 
-def create_interface():
-    video_input = gr.inputs.Video(label="视频文件")
-    start_time_input = gr.inputs.Textbox(label="开始时间")
-    end_time_input = gr.inputs.Textbox(label="结束时间")
-    fps_input = gr.inputs.Textbox(label="每秒截取图片的数量")
-    extract_frames_button = gr.outputs.Button(label="导出图片帧", action=extract_frames)
-    run_button = gr.outputs.Button(label="运行计算和训练", action=run_colmap_and_train)
+def create_ui():
+        with gr.Blocks(analytics_enabled=False) as ui_component:
+            with gr.Accordion("Video Input", open=True):
+                video_input = gr.Video(label="Upload Video")
+                start_time = gr.components.Textbox(lines=1, placeholder="00:00:10", label="Start Time")
+                end_time = gr.components.Textbox(lines=1, placeholder="00:00:50", label="End Time")
+                frames_per_second = gr.components.Textbox(lines=1, placeholder="2", label="Frames per Second")
+                btn_extract = gr.Button("Extract Frames", variant="primary")
 
-    interface = gr.Interface(
-        fn=[extract_frames, run_colmap_and_train],
-        inputs=[video_input, start_time_input, end_time_input, fps_input],
-        outputs=[extract_frames_button, run_button],
-        title="Gaussian Splatting",
-        description="导入视频，导出图片帧，运行计算和训练"
-    )
-    interface.launch(server_name="0.0.0.0", server_port=7860)
+            with gr.Accordion("Train", open=True):
+                btn_compute = gr.Button("Compute", variant="primary")
+
+            output_text = gr.components.Textbox(lines=1, label="Output")
+
+            btn_extract.click(
+                fn=extract_frames,
+                inputs=[video_input, start_time, end_time, frames_per_second],
+                outputs=[output_text]
+            )
+
+            btn_compute.click(
+                fn=run_colmap_and_train,
+                inputs=[],
+                outputs=[output_text]
+            )
+
+        return ui_component
 
 if __name__ == "__main__":
-    create_interface()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--server_name", default="localhost", help="Server name for the Gradio interface")
+    parser.add_argument("--server_port", type=int, default=7860, help="Server port for the Gradio interface")
+    args = parser.parse_args()
+
+    create_ui().launch(server_name=args.server_name, server_port=args.server_port)
