@@ -7,10 +7,10 @@ ROOT_DIR = "/workspace/gaussian-splatting-deploy"
 REPO_DIR = f"{ROOT_DIR}/gaussian-splatting"
 DATA_DIR = f"{ROOT_DIR}/data"
 
-def extract_frames(start_time, end_time, fps, video_file, scale_ratio):
+def extract_frames(start_time, dur_time, fps, video_file, scale_ratio):
     output_dir = f"{DATA_DIR}/images/"
     os.makedirs(output_dir, exist_ok=True)
-    command = f'ffmpeg -ss {start_time} -t {end_time} -i {video_file.name} -vf "fps={fps}" -f image2pipe -vcodec ppm - | convert -resize {scale_ratio}% - "{output_dir}/%04d.jpg"'
+    command = f'ffmpeg -ss {start_time} -t {dur_time} -i {video_file.name} -vf "fps={fps}" -f image2pipe -vcodec ppm - | convert -resize {scale_ratio}% - "{output_dir}/%04d.jpg"'
     subprocess.run(command, shell=True, check=True)
 
 def run_colmap_and_train():
@@ -29,7 +29,7 @@ def create_ui():
             with gr.Accordion("Video Input", open=True):
                 video_input = gr.Video(label="Upload Video")
                 start_time = gr.components.Textbox(lines=1, placeholder="00:00:10", label="Start Time")
-                end_time = gr.components.Textbox(lines=1, placeholder="00:00:50", label="End Time")
+                dur_time = gr.components.Textbox(lines=1, placeholder="00:00:50", label="Duration")
                 frames_per_second = gr.components.Textbox(lines=1, placeholder="2", label="Frames per Second")
                 scale_ratio = gr.components.Textbox(lines=1, placeholder="1.0", label="Scale Ratio")
                 btn_extract = gr.Button("Extract Frames", variant="primary")
@@ -41,7 +41,7 @@ def create_ui():
 
             btn_extract.click(
                 fn=extract_frames,
-                inputs=[video_input, start_time, end_time, frames_per_second, scale_ratio],
+                inputs=[video_input, start_time, dur_time, frames_per_second, scale_ratio],
                 outputs=[output_text]
             )
 
