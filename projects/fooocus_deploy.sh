@@ -14,7 +14,7 @@ if [ ! -d "${FOOOCUS_DIR}" ]; then
   
   echo "Creating a virtual environment..."
   python3 -m venv fooocus_env
-  fooocus_env/bin/pip install pygit2==1.12.2 numpy pillow
+  fooocus_env/bin/pip install pygit2==1.12.2 numpy pillow packaging
 
 fi
 
@@ -28,7 +28,7 @@ echo "Selected Port: ${SERVER_PORT}"
 
 # 启动GUI
 echo "启动GUI..."
-
+cd "${FOOOCUS_DIR}" || exit
 OPTIONS="Anime Realistic None"
 select opt in $OPTIONS; do
   if [ "$opt" = "Anime" ]; then
