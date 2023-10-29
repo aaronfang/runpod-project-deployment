@@ -14,7 +14,7 @@ if [ ! -d "${FOOOCUS_DIR}" ]; then
   
   echo "Creating a virtual environment..."
   python3 -m venv fooocus_env
-  fooocus_env/bin/pip install pygit2==1.12.2
+  fooocus_env/bin/pip install pygit2==1.12.2 numpy pillow
 
 fi
 
