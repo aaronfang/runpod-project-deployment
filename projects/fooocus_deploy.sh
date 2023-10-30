@@ -2,7 +2,7 @@
 
 ROOT_DIR="/workspace"
 FOOOCUS_DIR="${ROOT_DIR}/Fooocus"
-MODEL_DIR="${FOOOCUS_DIR}/models"
+MODEL_DIR="${FOOOCUS_DIR}/models/checkpoints"
 SERVER_PORT=7860
 
 # Clone the repository if KOYHA_DIR does not exist
