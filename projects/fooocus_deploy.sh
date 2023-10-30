@@ -2,10 +2,12 @@
 
 ROOT_DIR="/workspace"
 FOOOCUS_DIR="${ROOT_DIR}/Fooocus"
+MODEL_DIR="${FOOOCUS_DIR}/models"
 SERVER_PORT=7860
 
 # Clone the repository if KOYHA_DIR does not exist
 if [ ! -d "${FOOOCUS_DIR}" ]; then
+
   echo "Cloning the repository..."
   git clone https://github.com/lllyasviel/Fooocus.git "${FOOOCUS_DIR}"
 
@@ -15,6 +17,19 @@ if [ ! -d "${FOOOCUS_DIR}" ]; then
   echo "Creating a virtual environment..."
   python3 -m venv fooocus_env
   fooocus_env/bin/pip install pygit2==1.12.2 numpy pillow packaging
+
+  # check if the following models are downloaded, if not, download them
+  model_list=(
+    "https://civitai.com/api/download/models/128080?type=Model&format=SafeTensor&size=full&fp=fp32"
+    "https://civitai.com/api/download/models/90072?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+  )
+
+  for model_url in "${model_list[@]}"; do
+    # 从 URL 中移除 '?type' 之后的部分
+    download_url="${model_url%%\?type*}"
+    # 使用 aria2c 下载模型
+    aria2c --console-log-level=error -c -x 16 -s 16 -k 1M "${download_url}" -d "${MODEL_DIR}"
+  done
 
 fi
 
