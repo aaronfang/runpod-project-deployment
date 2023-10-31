@@ -15,6 +15,8 @@ if [ ! -d "${RLCM_DIR}" ]; then
   echo "Creating a virtual environment..."
   python -m venv venv 
   venv/bin/pip install -r requirements.txt
+  # venv/bin/pip uninstall torch
+  # venv/bin/pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
 
 fi
 
