@@ -15,11 +15,15 @@ if [ ! -d "${WONDER3D_DIR}" ]; then
   echo "Creating a virtual environment..."
   python -m venv venv 
   venv/bin/pip install -r requirements.txt
+  venv/bin/pip install wheel fire streamlit triton
   venv/bin/pip install git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
 
   echo "Downloading the pre-trained model..."
   gdown "1cjPsKhUy8lvod-XfTJi4Ofpt5-hVF4Gx"
   unzip "ckpts.zip"
+
+  mkdir sam_pt
+  wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth -O sam_pt/sam_vit_h_4b8939.pth
 
 fi
 
