@@ -32,4 +32,5 @@ echo "Selected Port: ${SERVER_PORT}"
 
 # 启动GUI
 echo "启动GUI..."
+cd "${KOYHA_DIR}" || exit
 ./gui.sh --share --listen=0.0.0.0 --server_port=${SERVER_PORT} --headless
