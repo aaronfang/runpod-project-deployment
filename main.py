@@ -17,8 +17,8 @@ class DeployApp:
         subprocess.run(['bash', script])
         return {"message": "Deploy Complete"}
 
-    def download(self, url, path):
-        download_files([url], path)
+    def download(self, url, path, api_key):
+        download_files([url], path, api_key)
         return "Download Complete"
 
     def kill_process_on_port(self, port):
@@ -45,6 +45,7 @@ class DeployApp:
 
             with gr.Accordion("Download Files", open=False):
                 download_url = gr.components.Textbox(lines=1, placeholder="https://civitai.com/api/download/models/128713?type=Model&format=SafeTensor&size=pruned&fp=fp16", label="下载URL")
+                api_key_input = gr.components.Textbox(lines=1, placeholder="Enter API Key", label="API Key")
                 url_dropdown = gr.components.Dropdown(choices=[
                     "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny.pth",
                     "https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11f1p_sd15_depth.pth",
@@ -93,7 +94,7 @@ class DeployApp:
         
             btn_download.click(
                 fn=self.download,
-                inputs=[download_url, download_path],
+                inputs=[download_url, download_path, api_key_input],
                 outputs=[output_text]
             )
 

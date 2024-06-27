@@ -26,13 +26,15 @@ def run_cmd_return(cmd):
     return result.returncode, result.stdout, result.stderr
 
 # download function from url
-def download_files(urls, dest_path):
+def download_files(urls, dest_path, api_key=None):
     for url in urls:
         parsed_url = urlparse(url)
         command = ""
 
         if 'civitai' in parsed_url.netloc:
             url = url.split('?type')[0]
+            if api_key:
+                url += f"?token={api_key}"
             command = f"aria2c --console-log-level=error -c -x 16 -s 16 -k 1M {url} -d \"{dest_path}\""
         elif 'huggingface' in parsed_url.netloc:
             filename = url.split('/')[-1]
