@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 #### init ####
 if [ ! -d "runpod-project-deployment" ]; then
