@@ -46,15 +46,7 @@ def download_files(urls, dest_path):
                 command = f"aria2c --console-log-level=error -c -x 16 -s 16 -k 1M {url} -d \"{dest_path}\""
             except:
                 print(f"An error occurred while downloading {url}.")
-        
         result = os.system(command)
-        if result != 0:
-            # Check if the error is due to authorization failure
-            if 'Authorization failed' in os.popen(command).read():
-                print(f"Authorization failed with aria2c for {url}. Trying wget...")
-                wget_command = f"wget {url} -P {dest_path}"
-                result = os.system(wget_command)
-        
         if result == 0:
             print(f"{url} downloaded successfully!")
         else:
